@@ -1,19 +1,19 @@
 param(
     [string[]]
-    $AddCopmilerFlags,
+    $AddCompilerFlags,
     [string[]]
     $AddLinkerFlags
 )
 
-$CopmilerFlags = @("-Wall", "-Wpedantic", "-I.")
+$CompilerFlags = @("-Wall", "-I.", "-std=gnu11")
 $LinkerFlags = @("-Lsqsv", "-lsqsv")
 
-$CopmilerFlags += $AddCopmilerFlags
+$CompilerFlags += $AddCompilerFlags
 $LinkerFlags += $AddLinkerFlags
 
 Get-Content -Raw "help.txt" | %{"R""docstring("}{$_}{")docstring"""} | Set-Content ".help.inc"
 
-gcc $CopmilerFlags -c ./main.c -o main.o
+gcc $CompilerFlags -c ./main.c -o main.o
 gcc $LinkerFlags ./main.o -o "a$($IsWindows ? ".exe" : '')"
 
 if ($IsWindows)

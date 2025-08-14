@@ -6,10 +6,11 @@
 #include "stdio.h"
 
 
-#define MAX_POWER 2
+#define MAX_POWER ((size_t)2)
 #define MAX_COEFF_LENGTH ((MAX_POWER) + 1)
 
-#define CMD_ARG_FLAG_SILENT 0x00002
+#define CMD_ARG_FLAG_SILENT               0x00002
+#define CMD_ARG_FLAG_REVERSE_COEFFICIENTS 0x00004
 
 /* conditional printf */
 #define cprintf(...) do {if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT)) { printf(__VA_ARGS__); }} while (0)
@@ -31,6 +32,10 @@ int main(int argc, char **argv)
         {
             break;
         }
+        else if (!strcmp(argv[i], "--reverse") || !strcmp(argv[i], "-r"))
+        {
+            cmd_arg_flags |= CMD_ARG_FLAG_REVERSE_COEFFICIENTS;
+        }
         else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
         {
             if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT))
@@ -47,7 +52,8 @@ int main(int argc, char **argv)
         }
         else if (!strcmp(argv[i], "--coeff") || !strcmp(argv[i], "-c"))
         {
-            int id = 0;
+            i++;
+            size_t id = 0;
             while (i < argc)
             {
                 char *end_ptr;
@@ -57,14 +63,16 @@ int main(int argc, char **argv)
                     break;
                 }
                 coefficients[id] = strtod(argv[i], &end_ptr);
-                if (end_ptr != argv[i])
+                if (*end_ptr != 0)
                 {
+                    cfprintf(stderr, "end at %s.\n", argv[i]);
                     break;
                 }
                 id++;
                 i++;
             }
-            cfprintf(stderr, "Read command line coefficients: ");
+            coefficients_length = id;
+            cfprintf(stderr, "Read %"PRIuMAX" command line coefficients: ", coefficients_length);
             for (size_t i = 0; i < coefficients_length; ++i)
             {
                 cfprintf(stderr, "%g ", coefficients[i]);
@@ -87,12 +95,25 @@ int main(int argc, char **argv)
         }
     }
 
+
+    if (cmd_arg_flags & CMD_ARG_FLAG_REVERSE_COEFFICIENTS)
+    {
+        double tmp;
+        for (size_t i = 0; i + i < coefficients_length; ++i)
+        {
+            tmp = coefficients[i];
+            coefficients[i] = coefficients[coefficients_length - i - 1];
+            coefficients[coefficients_length - i - 1] = tmp;
+        }
+    }
+
+
     /* solve */
     
     cfprintf(stderr, "Solving equation:");
-    for (int i = MAX_COEFF_LENGTH - 1; i > 0; --i)
+    for (size_t i = coefficients_length - 1; i > 0; --i)
     {
-        cfprintf(stderr, " %c %gx^%d", (i != MAX_COEFF_LENGTH - 1 ? '+' : ' '), coefficients[i], i);
+        cfprintf(stderr, " %c %gx^%"PRIuMAX, (i + 1 != coefficients_length ? '+' : ' '), coefficients[i], i);
     }
     cfprintf(stderr, " + %g\n", coefficients[0]);
 
@@ -113,6 +134,8 @@ int main(int argc, char **argv)
         if (res_code == SQSV_ERROR_CODE_INFINITE_SOLUTIONS)
         {
             cfprintf(stderr, "error: equation have infinite solutions\n");
+            printf("inf\n");
+            return 2;
         }
         if (SQSV_ERROR(res_code))
         {
@@ -126,6 +149,8 @@ int main(int argc, char **argv)
         if (res_code == SQSV_ERROR_CODE_INFINITE_SOLUTIONS)
         {
             cfprintf(stderr, "error: equation have infinite solutions\n");
+            printf("inf\n");
+            return 2;
         }
         if (SQSV_ERROR(res_code))
         {
@@ -144,10 +169,40 @@ int main(int argc, char **argv)
     return 0;
 }
 
+#define cmd_arg_flags flags
 uint64_t read_coefficients(uint64_t flags, double *coefficients, size_t *coefficients_length)
 {
-    (void)flags;
-    (void)coefficients;
-    (void)coefficients_length;
+    uintmax_t read_coefficients_length = 0;
+    while (1)
+    {
+        do 
+        {
+            cfprintf(stderr, "Enter power of equation [integer] > ");
+        }
+        while (scanf("%"PRIuMAX, &read_coefficients_length) != 1);
+
+        if (read_coefficients_length <= MAX_POWER)
+        {
+            break;
+        }
+        cfprintf(stderr, "Power is too big. Max power is : %"PRIuMAX"\n", MAX_POWER);
+    }
+
+    *coefficients_length = read_coefficients_length + 1;
+
+    size_t id = 0;
+    
+    while (id < *coefficients_length)
+    {
+        coefficients[id] = 0.0;
+        do
+        {
+            cfprintf(stderr, "Enter coefficient at x^%"PRIuMAX" >", (uintmax_t)id);
+        }
+        while (scanf("%lg", coefficients + id) != 1);
+        id++;
+    }
+
     return 0;
 }
+#undef cmd_arg_flags
