@@ -53,32 +53,35 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "--coeff") || !strcmp(argv[i], "-c"))
         {
             i++;
+            double value = 0.0;
             size_t id = 0;
             while (i < argc)
             {
                 char *end_ptr;
+                value = strtod(argv[i], &end_ptr);
+                if (*end_ptr != 0)
+                {
+                    break;
+                }
                 if (id >= MAX_COEFF_LENGTH)
                 {
                     cfprintf(stderr, "Warning: too many coefficients given. skip them.\n");
                     break;
                 }
-                coefficients[id] = strtod(argv[i], &end_ptr);
-                if (*end_ptr != 0)
-                {
-                    cfprintf(stderr, "end at %s.\n", argv[i]);
-                    break;
-                }
+                coefficients[id] = value;
                 id++;
                 i++;
             }
             coefficients_length = id;
-            cfprintf(stderr, "Read %"PRIuMAX" command line coefficients: ", coefficients_length);
+            cfprintf(stderr, "Read %"PRIuMAX" command line coefficients: ", (uintmax_t)coefficients_length);
             for (size_t i = 0; i < coefficients_length; ++i)
             {
                 cfprintf(stderr, "%g ", coefficients[i]);
             }
             cfprintf(stderr, "\n");
             coefficients_set = -1;
+            /* set pointer on last read argument */
+            --i;
         }
         else
         {
@@ -113,7 +116,7 @@ int main(int argc, char **argv)
     cfprintf(stderr, "Solving equation:");
     for (size_t i = coefficients_length - 1; i > 0; --i)
     {
-        cfprintf(stderr, " %c %gx^%"PRIuMAX, (i + 1 != coefficients_length ? '+' : ' '), coefficients[i], i);
+        cfprintf(stderr, " %c %gx^%"PRIuMAX, (i + 1 != coefficients_length ? '+' : ' '), coefficients[i], (uintmax_t)i);
     }
     cfprintf(stderr, " + %g\n", coefficients[0]);
 
@@ -158,10 +161,10 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        cfprintf(stderr, "Found roots:\n");
+        cfprintf(stderr, "Found %"PRIuMAX" roots:\n", (uintmax_t)slv.roots_length);
         for (size_t i = 0; i < slv.roots_length; ++i)
         {
-            cfprintf(stdout, "%g\n", slv.roots[i]);
+            printf("%g\n", slv.roots[i]);
         }
     }
     
@@ -172,20 +175,26 @@ int main(int argc, char **argv)
 #define cmd_arg_flags flags
 uint64_t read_coefficients(uint64_t flags, double *coefficients, size_t *coefficients_length)
 {
+    int ch;
     uintmax_t read_coefficients_length = 0;
     while (1)
     {
-        do 
+        while (1) 
         {
             cfprintf(stderr, "Enter power of equation [integer] > ");
+            if (scanf("%"PRIuMAX, &read_coefficients_length) == 1)
+            {
+                break;
+            }
+            do { ch = getchar(); } 
+            while (ch != EOF && ch != '\n');
         }
-        while (scanf("%"PRIuMAX, &read_coefficients_length) != 1);
 
         if (read_coefficients_length <= MAX_POWER)
         {
             break;
         }
-        cfprintf(stderr, "Power is too big. Max power is : %"PRIuMAX"\n", MAX_POWER);
+        cfprintf(stderr, "Power is too big. Max power is : %"PRIuMAX"\n", (uintmax_t)MAX_POWER);
     }
 
     *coefficients_length = read_coefficients_length + 1;
@@ -195,11 +204,16 @@ uint64_t read_coefficients(uint64_t flags, double *coefficients, size_t *coeffic
     while (id < *coefficients_length)
     {
         coefficients[id] = 0.0;
-        do
+        while (1)
         {
             cfprintf(stderr, "Enter coefficient at x^%"PRIuMAX" >", (uintmax_t)id);
+            if (scanf("%lg", coefficients + id) == 1)
+            {
+                break;
+            }
+            do { ch = getchar(); } 
+            while (ch != EOF && ch != '\n');
         }
-        while (scanf("%lg", coefficients + id) != 1);
         id++;
     }
 
