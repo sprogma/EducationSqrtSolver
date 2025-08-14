@@ -31,11 +31,16 @@ struct sqsv_equation_t
     size_t coefficients_length;
 };
 
+
+#define SQSV_SOLUTION_FLAG_DEFAULT        0x0000
+#define SQSV_SOLUTION_FLAG_CUSTOM_EPSILON 0x0002
+
 struct sqsv_solution_t
 {
-    double epsilon;
+    uint64_t flags;
     double *roots;
     size_t roots_length;
+    double epsilon;
 };
 
 

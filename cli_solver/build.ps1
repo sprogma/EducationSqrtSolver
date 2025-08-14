@@ -15,3 +15,8 @@ Get-Content -Raw "help.txt" | %{"R""docstring("}{$_}{")docstring"""} | Set-Conte
 
 gcc $CopmilerFlags -c ./main.c -o main.o
 gcc $LinkerFlags ./main.o -o "a$($IsWindows ? ".exe" : '')"
+
+if ($IsWindows)
+{
+    cp ./sqsv/sqsv.dll ./
+}
