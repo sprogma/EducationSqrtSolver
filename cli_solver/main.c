@@ -12,8 +12,8 @@
 #define CMD_ARG_FLAG_SILENT 0x00002
 
 /* conditional printf */
-#define cprintf(...) do {if (!(cmd_arg_flags | CMD_ARG_FLAG_SILENT)) { printf(__VA_ARGS__); }} while (0)
-#define cfprintf(...) do {if (!(cmd_arg_flags | CMD_ARG_FLAG_SILENT)) { fprintf(__VA_ARGS__); }} while (0)
+#define cprintf(...) do {if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT)) { printf(__VA_ARGS__); }} while (0)
+#define cfprintf(...) do {if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT)) { fprintf(__VA_ARGS__); }} while (0)
 
 uint64_t read_coefficients(uint64_t flags, double *coefficients, size_t *coefficients_length);
 
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
         }
         else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
         {
-            if (!(cmd_arg_flags | CMD_ARG_FLAG_SILENT))
+            if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT))
             {
                 puts(
                     #include ".help.inc"
