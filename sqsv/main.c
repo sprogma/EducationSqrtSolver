@@ -69,7 +69,7 @@ static uint64_t solve_square_equation(double *coefficients, size_t coefficients_
 
     double sqrt_d = sqrt(d);
 
-    if (fabs(d) < -solution->epsilon)
+    if (fabs(d) < solution->epsilon)
     {
         SETROOTCOUNT(1);    
         SETROOT(0, -coefficients[1] / coefficients[2] / 2.0);

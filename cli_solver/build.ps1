@@ -5,6 +5,8 @@ param(
     $AddLinkerFlags
 )
 
+pushd $PSScriptRoot
+
 $CompilerFlags = @("-Wall", "-I.", "-std=gnu11")
 $LinkerFlags = @("-Lsqsv", "-lsqsv")
 
@@ -20,3 +22,5 @@ if ($IsWindows)
 {
     cp ./sqsv/sqsv.dll ./
 }
+
+popd
