@@ -2,6 +2,9 @@
 #define SQRT_SOLVER
 
 #include "inttypes.h"
+#ifndef __WIN32
+    #include "stddef.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

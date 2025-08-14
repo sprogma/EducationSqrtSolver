@@ -51,8 +51,13 @@ assert {Equal (& $Appliction -c 1 3 2) -1, -0.5}
 assert {Equal (& $Appliction -c 3 2 1) @()}
 assert {Equal (& $Appliction -c 1 2 3) @()}
 assert {Equal (& $Appliction -c 3 1 -2) -1, 1.5}
-assert {Equal (& $Appliction -c 3 1 -2 -r) -1,(2/3)}
+assert {Equal (& $Appliction -c 3 1 -2 -r) -1, (2/3)}
 assert {Equal (& $Appliction -c 3 1 0) -3}
 assert {Equal (& $Appliction -c 1 -2 1) 1}
+assert {Equal ("1`n0`n1" | & $Appliction) 0}
+assert {Equal ("1`n1`n0" | & $Appliction) @()}
+assert {Equal ("2`n1`n3`n2" | & $Appliction) -1, -0.5}
+assert {(& $Appliction -c 0 0 -r) -eq "inf"}
+assert {("0`n0" | & $Appliction) -eq "inf"}
 
 popd
