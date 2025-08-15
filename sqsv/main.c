@@ -3,6 +3,7 @@
 
 
 #define SETROOTCOUNT(count) do { \
+        _Static_assert(((count) | 1) && (count) >= 0, "SETROOTCOUNT argument must be positive integer constant"); \
         if (solution->roots == NULL) \
         { \
             solution->roots_length = (count); \
@@ -13,7 +14,10 @@
             solution->roots_length = (count); \
         } \
     } while (0)
-#define SETROOT(id, root) do { if (solution->roots_length > (id)) { solution->roots[(id)] = (root); } } while (0)
+#define SETROOT(id, root) do { \
+        _Static_assert(((id) | 1) && (id) >= 0, "SETROOT id must be positive integer constant"); \
+        if (solution->roots_length > (id)) { solution->roots[(id)] = (root); } \
+    } while (0)
 
 static uint64_t solve_constant_equation(double *coefficients, size_t coefficients_length, struct sqsv_solution_t *solution)
 {
