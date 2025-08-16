@@ -16,11 +16,11 @@
 #define cprintf(...) do {if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT)) { printf(__VA_ARGS__); }} while (0)
 #define cfprintf(...) do {if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT)) { fprintf(__VA_ARGS__); }} while (0)
 
-uint64_t read_coefficients(uint64_t flags, double *coefficients, size_t *coefficients_length);
+uint64_t read_coefficients(uint64_t flags, double **coefficients, size_t *coefficients_length);
 
 int main(int argc, char **argv)
 {
-    double *coefficients = malloc(sizeof(*coefficients) * MAX_COEFF_LENGTH);
+    double *coefficients = NULL;
     size_t coefficients_length = 0;
     uint32_t coefficients_set = 0;
     uint64_t cmd_arg_flags = 0;
@@ -44,6 +44,7 @@ int main(int argc, char **argv)
                     #include ".help.inc"
                 );
             }
+            free(coefficients);
             return 0;
         }
         else if (!strcmp(argv[i], "--silent") || !strcmp(argv[i], "-s"))
@@ -52,6 +53,18 @@ int main(int argc, char **argv)
         }
         else if (!strcmp(argv[i], "--coeff") || !strcmp(argv[i], "-c"))
         {
+            if (coefficients_set)
+            {
+                fprintf(stderr, "Given two \"coeff\" arguments at the same time.");
+            }
+            /* read coefficients */
+            size_t coefficients_alloc = 16;
+            coefficients = malloc(sizeof(*coefficients) * coefficients_alloc);
+            if (coefficients == NULL)
+            {
+                fprintf(stderr, "No more memory\n");
+                return 1;
+            }
             i++;
             double value = 0.0;
             size_t id = 0;
@@ -67,6 +80,19 @@ int main(int argc, char **argv)
                 {
                     cfprintf(stderr, "Warning: too many coefficients given. skip them.\n");
                     break;
+                }
+                if (id >= coefficients_alloc)
+                {
+                    coefficients_alloc *= 2;
+                    double *new_ptr = realloc(coefficients, sizeof(*coefficients) * coefficients_alloc);
+                    if (new_ptr == NULL)
+                    {
+                        fprintf(stderr, "No more memory\n");
+                        
+                        free(coefficients);
+                        return 1;
+                    }
+                    coefficients = new_ptr;
                 }
                 coefficients[id] = value;
                 id++;
@@ -91,9 +117,10 @@ int main(int argc, char **argv)
 
     if (!coefficients_set)
     {
-        uint64_t error_code = read_coefficients(cmd_arg_flags, coefficients, &coefficients_length);
+        uint64_t error_code = read_coefficients(cmd_arg_flags, &coefficients, &coefficients_length);
         if (error_code != 0)
         {
+            free(coefficients);
             return 0x1000 | error_code;
         }
     }
@@ -138,11 +165,15 @@ int main(int argc, char **argv)
         {
             cfprintf(stderr, "error: equation have infinite solutions\n");
             printf("inf\n");
+
+            free(coefficients);
             return 2;
         }
         if (SQSV_ERROR(res_code))
         {
             fprintf(stderr, "error in call of sqsv_solve_equation. code %08x%08x\n", (uint32_t)(res_code >> 32), (uint32_t)res_code);
+
+            free(coefficients);
             return 1;
         }
 
@@ -153,11 +184,15 @@ int main(int argc, char **argv)
         {
             cfprintf(stderr, "error: equation have infinite solutions\n");
             printf("inf\n");
+
+            free(coefficients);
             return 2;
         }
         if (SQSV_ERROR(res_code))
         {
             fprintf(stderr, "error in call of sqsv_solve_equation. code %08x%08x\n", (uint32_t)(res_code >> 32), (uint32_t)res_code);
+
+            free(coefficients);
             return 1;
         }
 
@@ -167,13 +202,23 @@ int main(int argc, char **argv)
             printf("%g\n", slv.roots[i]);
         }
     }
+
+    free(coefficients);
     
     
     return 0;
 }
 
+
+
+/*
+    Takes equation formula from user, allocates memory and return it into "coefficients". 
+    returns equation length in "coefficients_length"
+
+    if error occurs, *coefficients will be NULL (and return code != 0)
+*/
 #define cmd_arg_flags flags
-uint64_t read_coefficients(uint64_t flags, double *coefficients, size_t *coefficients_length)
+uint64_t read_coefficients(uint64_t flags, double **coefficients, size_t *coefficients_length)
 {
     int ch;
     uintmax_t read_coefficients_length = 0;
@@ -198,16 +243,17 @@ uint64_t read_coefficients(uint64_t flags, double *coefficients, size_t *coeffic
     }
 
     *coefficients_length = read_coefficients_length + 1;
+    *coefficients = malloc(sizeof(**coefficients) * (*coefficients_length));
 
     size_t id = 0;
     
     while (id < *coefficients_length)
     {
-        coefficients[id] = 0.0;
+        (*coefficients)[id] = 0.0;
         while (1)
         {
             cfprintf(stderr, "Enter coefficient at x^%"PRIuMAX" >", (uintmax_t)id);
-            if (scanf("%lg", coefficients + id) == 1)
+            if (scanf("%lg", (*coefficients) + id) == 1)
             {
                 break;
             }
