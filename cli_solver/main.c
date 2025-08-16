@@ -26,17 +26,17 @@ int main(int argc, char **argv)
     uint64_t cmd_arg_flags = 0;
     
     /* parse cmdline args */
-    for (int i = 1; i < argc; ++i)
+    for (int curr = 1; curr < argc; ++curr)
     {
-        if (!strcmp(argv[i], "--"))
+        if (!strcmp(argv[curr], "--"))
         {
             break;
         }
-        else if (!strcmp(argv[i], "--reverse") || !strcmp(argv[i], "-r"))
+        else if (!strcmp(argv[curr], "--reverse") || !strcmp(argv[curr], "-r"))
         {
             cmd_arg_flags |= CMD_ARG_FLAG_REVERSE_COEFFICIENTS;
         }
-        else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
+        else if (!strcmp(argv[curr], "--help") || !strcmp(argv[curr], "-h"))
         {
             if (!(cmd_arg_flags & CMD_ARG_FLAG_SILENT))
             {
@@ -47,11 +47,11 @@ int main(int argc, char **argv)
             free(coefficients);
             return 0;
         }
-        else if (!strcmp(argv[i], "--silent") || !strcmp(argv[i], "-s"))
+        else if (!strcmp(argv[curr], "--silent") || !strcmp(argv[curr], "-s"))
         {
             cmd_arg_flags |= CMD_ARG_FLAG_SILENT;
         }
-        else if (!strcmp(argv[i], "--coeff") || !strcmp(argv[i], "-c"))
+        else if (!strcmp(argv[curr], "--coeff") || !strcmp(argv[curr], "-c"))
         {
             if (coefficients_set)
             {
@@ -65,13 +65,13 @@ int main(int argc, char **argv)
                 fprintf(stderr, "No more memory\n");
                 return 1;
             }
-            i++;
+            curr++;
             double value = 0.0;
             size_t id = 0;
-            while (i < argc)
+            while (curr < argc)
             {
                 char *end_ptr;
-                value = strtod(argv[i], &end_ptr);
+                value = strtod(argv[curr], &end_ptr);
                 if (*end_ptr != 0)
                 {
                     break;
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
                 }
                 coefficients[id] = value;
                 id++;
-                i++;
+                curr++;
             }
             coefficients_length = id;
             cfprintf(stderr, "Read %"PRIuMAX" command line coefficients: ", (uintmax_t)coefficients_length);
@@ -107,11 +107,11 @@ int main(int argc, char **argv)
             cfprintf(stderr, "\n");
             coefficients_set = -1;
             /* set pointer on last read argument */
-            --i;
+            --curr;
         }
         else
         {
-            cfprintf(stderr, "Unknown command line flag: %s\n", argv[i]);
+            cfprintf(stderr, "Unknown command line flag: %s\n", argv[curr]);
         }
     }
 
